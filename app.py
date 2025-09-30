@@ -3,10 +3,8 @@ import whisper
 import os
 import tempfile
 import zipfile
-from googletrans import Translator
+from deep_translator import GoogleTranslator
 import subprocess
-import threading
-import time
 
 st.set_page_config(
     page_title="YouTube Arabic Transcriber", 
@@ -28,10 +26,12 @@ def load_whisper_model():
     """Load Whisper model (cached for performance)"""
     return whisper.load_model("base")
 
-@st.cache_resource
-def load_translator():
-    """Load Google Translator (cached for performance)"""
-    return Translator()
+def translate_text(text, source='ar', target='en'):
+    """Translate text using deep-translator"""
+    try:
+        return GoogleTranslator(source=source, target=target).translate(text)
+    except Exception as e:
+        return f"Translation failed: {str(e)}"
 
 def download_video(url, output_path):
     """Download video using yt-dlp"""
@@ -50,7 +50,7 @@ def download_video(url, output_path):
         st.error(f"Download failed: {str(e)}")
         return None
 
-def process_video(url, video_index, model, translator, progress_bar, status_text):
+def process_video(url, video_index, model, progress_bar, status_text):
     """Process a single video"""
     try:
         status_text.text(f"Downloading video {video_index}...")
@@ -76,8 +76,7 @@ def process_video(url, video_index, model, translator, progress_bar, status_text
             
             # Translate
             try:
-                translation = translator.translate(arabic_text, src='ar', dest='en')
-                english_text = translation.text
+                english_text = translate_text(arabic_text, 'ar', 'en')
             except Exception as e:
                 english_text = f"Translation failed: {str(e)}"
             
@@ -116,7 +115,6 @@ if st.sidebar.button("🚀 Start Processing", disabled=st.session_state.processi
         # Load models
         with st.spinner("Loading AI models..."):
             model = load_whisper_model()
-            translator = load_translator()
         
         # Process each video
         for i, url in enumerate(urls, 1):
@@ -126,7 +124,7 @@ if st.sidebar.button("🚀 Start Processing", disabled=st.session_state.processi
             progress_bar = st.progress(0)
             status_text = st.empty()
             
-            result = process_video(url, i, model, translator, progress_bar, status_text)
+            result = process_video(url, i, model, progress_bar, status_text)
             
             if result:
                 st.session_state.processed_videos.append(result)
