@@ -26,7 +26,7 @@ if 'processing' not in st.session_state:
 @st.cache_resource
 def load_whisper_model():
     """Load Whisper model (cached for performance)"""
-    return whisper.load_model("large")
+    return whisper.load_model("base")
 
 @st.cache_resource
 def load_translator():
