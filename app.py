@@ -36,15 +36,29 @@ def translate_text(text, source='ar', target='en'):
 def download_video(url, output_path):
     """Download video using yt-dlp"""
     try:
-        cmd = ["yt-dlp", url, "-o", f"{output_path}.%(ext)s"]
+        cmd = ["yt-dlp", url, "-o", f"{output_path}.%(ext)s", "--no-playlist"]
         result = subprocess.run(cmd, capture_output=True, text=True)
+        
+        # Debug: Show what happened
+        st.write(f"**Debug - Command:** {' '.join(cmd)}")
+        st.write(f"**Debug - Return code:** {result.returncode}")
+        if result.stdout:
+            st.write(f"**Debug - Output:** {result.stdout[:500]}")
+        if result.stderr:
+            st.write(f"**Debug - Error:** {result.stderr[:500]}")
         
         # Find the downloaded file
         files = [f for f in os.listdir(os.path.dirname(output_path)) 
                 if f.startswith(os.path.basename(output_path))]
         
         if files:
+            st.write(f"**Debug - Found file:** {files[0]}")
             return os.path.join(os.path.dirname(output_path), files[0])
+        else:
+            st.write("**Debug - No files found matching pattern**")
+            # Show all files in directory
+            all_files = os.listdir(os.path.dirname(output_path))
+            st.write(f"**Debug - All files in temp dir:** {all_files}")
         return None
     except Exception as e:
         st.error(f"Download failed: {str(e)}")
